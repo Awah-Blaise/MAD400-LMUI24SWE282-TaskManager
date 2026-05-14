@@ -70,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 10),
 
             const Text(
-              'Student ID: SE400123',
+              'Student ID: LMUI-24SWE282',
 
               style: TextStyle(
                 fontSize: 18,
