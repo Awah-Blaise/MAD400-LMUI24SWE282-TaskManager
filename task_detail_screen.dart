@@ -91,7 +91,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 const SizedBox(height: 15),
 
                 DropdownButtonFormField(
-                  value: selectedCategory,
+                  initialValue: selectedCategory,
                   items: const [
                     DropdownMenuItem(
                       value: 'School',
@@ -120,7 +120,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 const SizedBox(height: 15),
 
                 DropdownButtonFormField(
-                  value: selectedPriority,
+                  initialValue: selectedPriority,
                   items: const [
                     DropdownMenuItem(
                       value: 'Low',
