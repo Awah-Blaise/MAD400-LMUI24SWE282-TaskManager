@@ -1,765 +1,421 @@
 import 'package:flutter/material.dart';
 import '../models/task.dart';
-import '../widgets/task_card.dart';
-import 'task_detail_screen.dart';
 
-class TaskListScreen extends StatefulWidget {
-  const TaskListScreen({super.key});
+class TaskDetailScreen extends StatefulWidget {
+  final Task task;
+  final VoidCallback onDelete;
+  final VoidCallback onToggleComplete;
+  final Function(Task) onEdit;
+
+  const TaskDetailScreen({
+    super.key,
+    required this.task,
+    required this.onDelete,
+    required this.onToggleComplete,
+    required this.onEdit,
+  });
 
   @override
-  State<TaskListScreen> createState() =>
-      _TaskListScreenState();
+  State<TaskDetailScreen> createState() => _TaskDetailScreenState();
 }
 
-class _TaskListScreenState
-    extends State<TaskListScreen> {
-  List<Task> tasks = [
-    Task(
-      title: 'Complete Flutter Assignment',
-      description:
-          'Finish the mobile application exercise',
-      category: 'School',
-      priority: 'High',
-      dueDate:
-          DateTime.now().add(const Duration(days: 2)),
-    ),
+class _TaskDetailScreenState extends State<TaskDetailScreen> {
+  late TextEditingController titleController;
+  late TextEditingController descriptionController;
 
-    Task(
-      title: 'Workout Session',
-      description: 'Go to the gym and exercise',
-      category: 'Health',
-      priority: 'Medium',
-      dueDate:
-          DateTime.now().add(const Duration(days: 1)),
-    ),
-  ];
+  late String selectedCategory;
+  late String selectedPriority;
+  late DateTime selectedDate;
 
-  String selectedFilter = 'All';
-  String searchQuery = '';
+  @override
+  void initState() {
+    super.initState();
 
-  final TextEditingController titleController =
-      TextEditingController();
+    titleController =
+        TextEditingController(text: widget.task.title);
 
-  final TextEditingController descriptionController =
-      TextEditingController();
+    descriptionController =
+        TextEditingController(text: widget.task.description);
 
-  String selectedCategory = 'School';
-  String selectedPriority = 'Medium';
-
-  DateTime? selectedDate;
-
-  List<Task> getFilteredTasks() {
-    List<Task> filteredTasks = tasks;
-
-    if (selectedFilter == 'Pending') {
-      filteredTasks = filteredTasks
-          .where((task) => !task.isCompleted)
-          .toList();
-    }
-
-    if (selectedFilter == 'Completed') {
-      filteredTasks = filteredTasks
-          .where((task) => task.isCompleted)
-          .toList();
-    }
-
-    if (searchQuery.isNotEmpty) {
-      filteredTasks = filteredTasks
-          .where(
-            (task) => task.title
-                .toLowerCase()
-                .contains(
-                  searchQuery.toLowerCase(),
-                ),
-          )
-          .toList();
-    }
-
-    return filteredTasks;
+    selectedCategory = widget.task.category;
+    selectedPriority = widget.task.priority;
+    selectedDate = widget.task.dueDate;
   }
 
-  void addTask() {
-    if (titleController.text.isEmpty ||
-        descriptionController.text.isEmpty ||
-        selectedDate == null) {
-      return;
-    }
-
-    setState(() {
-      tasks.add(
-        Task(
-          title: titleController.text,
-          description:
-              descriptionController.text,
-          category: selectedCategory,
-          priority: selectedPriority,
-          dueDate: selectedDate!,
-        ),
-      );
-    });
-
-    titleController.clear();
-    descriptionController.clear();
-
-    selectedCategory = 'School';
-    selectedPriority = 'Medium';
-    selectedDate = null;
-
-    Navigator.pop(context);
-  }
-
-  void showAddTaskBottomSheet() {
+  void showEditBottomSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom:
-                    MediaQuery.of(context)
-                            .viewInsets
-                            .bottom +
-                        20,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize:
-                      MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Add New Task',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight:
-                            FontWeight.bold,
-                      ),
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom:
+                MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Edit Task',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Task Title',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                DropdownButtonFormField(
+                  initialValue: selectedCategory,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'School',
+                      child: Text('School'),
                     ),
-
-                    const SizedBox(
-                        height: 20),
-
-                    TextField(
-                      controller:
-                          titleController,
-                      decoration:
-                          const InputDecoration(
-                        labelText:
-                            'Task Title',
-                        border:
-                            OutlineInputBorder(),
-                      ),
+                    DropdownMenuItem(
+                      value: 'Personal',
+                      child: Text('Personal'),
                     ),
-
-                    const SizedBox(
-                        height: 15),
-
-                    TextField(
-                      controller:
-                          descriptionController,
-                      maxLines: 3,
-                      decoration:
-                          const InputDecoration(
-                        labelText:
-                            'Description',
-                        border:
-                            OutlineInputBorder(),
-                      ),
-                    ),
-
-                    const SizedBox(
-                        height: 15),
-
-                    DropdownButtonFormField(
-                      value:
-                          selectedCategory,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'School',
-                          child:
-                              Text('School'),
-                        ),
-
-                        DropdownMenuItem(
-                          value:
-                              'Personal',
-                          child:
-                              Text('Personal'),
-                        ),
-
-                        DropdownMenuItem(
-                          value: 'Health',
-                          child:
-                              Text('Health'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setModalState(() {
-                          selectedCategory =
-                              value!;
-                        });
-                      },
-                      decoration:
-                          const InputDecoration(
-                        labelText:
-                            'Category',
-                        border:
-                            OutlineInputBorder(),
-                      ),
-                    ),
-
-                    const SizedBox(
-                        height: 15),
-
-                    DropdownButtonFormField(
-                      value:
-                          selectedPriority,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Low',
-                          child:
-                              Text('Low'),
-                        ),
-
-                        DropdownMenuItem(
-                          value:
-                              'Medium',
-                          child: Text(
-                              'Medium'),
-                        ),
-
-                        DropdownMenuItem(
-                          value: 'High',
-                          child:
-                              Text('High'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setModalState(() {
-                          selectedPriority =
-                              value!;
-                        });
-                      },
-                      decoration:
-                          const InputDecoration(
-                        labelText:
-                            'Priority',
-                        border:
-                            OutlineInputBorder(),
-                      ),
-                    ),
-
-                    const SizedBox(
-                        height: 15),
-
-                    SizedBox(
-                      width:
-                          double.infinity,
-                      child:
-                          ElevatedButton.icon(
-                        icon: const Icon(
-                          Icons
-                              .calendar_today,
-                        ),
-
-                        label: Text(
-                          selectedDate ==
-                                  null
-                              ? 'Pick Due Date'
-                              : '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}',
-                        ),
-
-                        onPressed:
-                            () async {
-                          DateTime?
-                              pickedDate =
-                              await showDatePicker(
-                            context:
-                                context,
-
-                            initialDate:
-                                DateTime
-                                    .now(),
-
-                            firstDate:
-                                DateTime
-                                    .now(),
-
-                            lastDate:
-                                DateTime(
-                                    2030),
-                          );
-
-                          if (pickedDate !=
-                              null) {
-                            setModalState(
-                                () {
-                              selectedDate =
-                                  pickedDate;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(
-                        height: 20),
-
-                    SizedBox(
-                      width:
-                          double.infinity,
-                      child:
-                          ElevatedButton(
-                        onPressed:
-                            addTask,
-
-                        child:
-                            const Text(
-                          'Add Task',
-                        ),
-                      ),
+                    DropdownMenuItem(
+                      value: 'Health',
+                      child: Text('Health'),
                     ),
                   ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedCategory = value!;
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-            );
-          },
+
+                const SizedBox(height: 15),
+
+                DropdownButtonFormField(
+                  initialValue: selectedPriority,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Low',
+                      child: Text('Low'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Medium',
+                      child: Text('Medium'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'High',
+                      child: Text('High'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedPriority = value!;
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Priority',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.calendar_today),
+                    label: Text(
+                      '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                    ),
+                    onPressed: () async {
+                      DateTime? pickedDate =
+                          await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime(2030),
+                      );
+
+                      if (pickedDate != null) {
+                        setState(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (titleController.text.isEmpty ||
+                          descriptionController.text.isEmpty) {
+                        return;
+                      }
+
+                      Task updatedTask = Task(
+                        title: titleController.text,
+                        description:
+                            descriptionController.text,
+                        category: selectedCategory,
+                        priority: selectedPriority,
+                        dueDate: selectedDate,
+                        isCompleted:
+                            widget.task.isCompleted,
+                      );
+
+                      widget.onEdit(updatedTask);
+
+                      Navigator.pop(context);
+
+                      setState(() {});
+                    },
+                    child: const Text('Save Changes'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
 
-  void sortByDate() {
-    setState(() {
-      tasks.sort(
-        (a, b) =>
-            a.dueDate.compareTo(
-          b.dueDate,
-        ),
-      );
-    });
-  }
-
-  void sortByPriority() {
-    setState(() {
-      List<String> order = [
-        'High',
-        'Medium',
-        'Low'
-      ];
-
-      tasks.sort(
-        (a, b) => order
-            .indexOf(a.priority)
-            .compareTo(
-              order.indexOf(
-                  b.priority),
-            ),
-      );
-    });
-  }
-
-  Widget buildFilterButton(
-      String filterName) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor:
-            selectedFilter == filterName
-                ? Colors.teal
-                : Colors.grey,
-      ),
-
-      onPressed: () {
-        setState(() {
-          selectedFilter = filterName;
-        });
-      },
-
-      child: Text(filterName),
-    );
-  }
-
-  Widget buildStatisticColumn(
-      String title,
-      int value) {
-    return Column(
-      children: [
-        Text(
-          value.toString(),
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-
-        Text(title),
-      ],
-    );
+  Color getPriorityColor() {
+    switch (widget.task.priority) {
+      case 'High':
+        return Colors.red;
+      case 'Medium':
+        return Colors.orange;
+      default:
+        return Colors.green;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    List<Task> filteredTasks =
-        getFilteredTasks();
-
-    int completedTasks = tasks
-        .where((task) => task.isCompleted)
-        .length;
-
-    int pendingTasks = tasks
-        .where((task) => !task.isCompleted)
-        .length;
-
-    double progress = tasks.isEmpty
-        ? 0
-        : completedTasks / tasks.length;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Task Manager'),
-
+        title: const Text('Task Details'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.sort),
-
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-
-                builder: (context) {
-                  return Column(
-                    mainAxisSize:
-                        MainAxisSize.min,
-
-                    children: [
-                      ListTile(
-                        leading: const Icon(
-                          Icons.date_range,
-                        ),
-
-                        title: const Text(
-                          'Sort by Due Date',
-                        ),
-
-                        onTap: () {
-                          sortByDate();
-
-                          Navigator.pop(
-                              context);
-                        },
-                      ),
-
-                      ListTile(
-                        leading: const Icon(
-                          Icons
-                              .priority_high,
-                        ),
-
-                        title: const Text(
-                          'Sort by Priority',
-                        ),
-
-                        onTap: () {
-                          sortByPriority();
-
-                          Navigator.pop(
-                              context);
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-
-          IconButton(
-            icon: const Icon(
-              Icons.delete_forever,
-            ),
-
-            onPressed: () {
-              showDialog(
-                context: context,
-
-                builder: (context) {
-                  return AlertDialog(
-                    title: const Text(
-                      'Clear All Tasks',
-                    ),
-
-                    content: const Text(
-                      'Are you sure you want to delete all tasks?',
-                    ),
-
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(
-                              context);
-                        },
-
-                        child: const Text(
-                            'Cancel'),
-                      ),
-
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            tasks.clear();
-                          });
-
-                          Navigator.pop(
-                              context);
-                        },
-
-                        child: const Text(
-                            'Delete'),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
+            icon: const Icon(Icons.edit),
+            onPressed: showEditBottomSheet,
           ),
         ],
       ),
 
-      floatingActionButton:
-          FloatingActionButton(
-        onPressed:
-            showAddTaskBottomSheet,
-
-        child: const Icon(Icons.add),
-      ),
-
-      body: Padding(
-        padding:
-            const EdgeInsets.all(16),
-
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
-            TextField(
-              decoration:
-                  const InputDecoration(
-                hintText:
-                    'Search tasks...',
-                prefixIcon:
-                    Icon(Icons.search),
-                border:
-                    OutlineInputBorder(),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: getPriorityColor().withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
               ),
-
-              onChanged: (value) {
-                setState(() {
-                  searchQuery = value;
-                });
-              },
-            ),
-
-            const SizedBox(height: 20),
-
-            Card(
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(
-                        15),
-              ),
-
-              child: Padding(
-                padding:
-                    const EdgeInsets.all(
-                        16),
-
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment
-                              .spaceAround,
-
-                      children: [
-                        buildStatisticColumn(
-                          'Total',
-                          tasks.length,
-                        ),
-
-                        buildStatisticColumn(
-                          'Completed',
-                          completedTasks,
-                        ),
-
-                        buildStatisticColumn(
-                          'Pending',
-                          pendingTasks,
-                        ),
-                      ],
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.task.title,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
 
-                    const SizedBox(
-                        height: 15),
+                  const SizedBox(height: 10),
 
-                    LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 10,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                  Row(
+                    children: [
+                      Chip(
+                        label:
+                            Text(widget.task.category),
+                      ),
 
-            const SizedBox(height: 20),
+                      const SizedBox(width: 10),
 
-            Row(
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceEvenly,
-
-              children: [
-                buildFilterButton('All'),
-
-                buildFilterButton(
-                    'Pending'),
-
-                buildFilterButton(
-                    'Completed'),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            Expanded(
-              child: filteredTasks.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No tasks available',
-                        style: TextStyle(
-                          fontSize: 18,
+                      Chip(
+                        backgroundColor:
+                            getPriorityColor(),
+                        label: Text(
+                          widget.task.priority,
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    )
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
-                  : ListView.builder(
-                      itemCount:
-                          filteredTasks
-                              .length,
+            const SizedBox(height: 25),
 
-                      itemBuilder:
-                          (context, index) {
-                        Task task =
-                            filteredTasks[
-                                index];
+            buildDetailSection(
+              'Description',
+              widget.task.description,
+            ),
 
-                        return Dismissible(
-                          key: Key(
-                            task.title +
-                                index
-                                    .toString(),
-                          ),
+            buildDetailSection(
+              'Due Date',
+              '${widget.task.dueDate.day}/${widget.task.dueDate.month}/${widget.task.dueDate.year}',
+            ),
 
-                          direction:
-                              DismissDirection
-                                  .endToStart,
+            buildDetailSection(
+              'Status',
+              widget.task.isCompleted
+                  ? 'Completed'
+                  : 'Pending',
+            ),
 
-                          background:
-                              Container(
-                            alignment:
-                                Alignment
-                                    .centerRight,
+            const SizedBox(height: 40),
 
-                            padding:
-                                const EdgeInsets
-                                    .only(
-                              right: 20,
-                            ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: Icon(
+                  widget.task.isCompleted
+                      ? Icons.undo
+                      : Icons.check_circle,
+                ),
+                label: Text(
+                  widget.task.isCompleted
+                      ? 'Mark as Pending'
+                      : 'Mark as Complete',
+                ),
+                onPressed: () {
+                  widget.onToggleComplete();
 
-                            decoration:
-                                BoxDecoration(
-                              color:
-                                  Colors.red,
+                  setState(() {});
+                },
+              ),
+            ),
 
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                15,
-                              ),
-                            ),
+            const SizedBox(height: 15),
 
-                            child:
-                                const Icon(
-                              Icons.delete,
-                              color:
-                                  Colors.white,
-                            ),
-                          ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                icon: const Icon(Icons.delete),
+                label: const Text('Delete Task'),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title:
+                            const Text('Delete Task'),
 
-                          onDismissed:
-                              (direction) {
-                            setState(() {
-                              tasks.remove(
-                                  task);
-                            });
-                          },
+                        content: const Text(
+                          'Are you sure you want to delete this task?',
+                        ),
 
-                          child: TaskCard(
-                            task: task,
-
-                            onTap: () {
-                              Navigator.push(
-                                context,
-
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) =>
-                                          TaskDetailScreen(
-                                    task: task,
-
-                                    onDelete:
-                                        () {
-                                      setState(
-                                          () {
-                                        tasks.remove(
-                                            task);
-                                      });
-                                    },
-
-                                    onToggleComplete:
-                                        () {
-                                      setState(
-                                          () {
-                                        task.isCompleted =
-                                            !task.isCompleted;
-                                      });
-                                    },
-
-                                    onEdit:
-                                        (
-                                      updatedTask,
-                                    ) {
-                                      setState(
-                                          () {
-                                        int index =
-                                            tasks.indexOf(
-                                          task,
-                                        );
-
-                                        tasks[index] =
-                                            updatedTask;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              );
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
                             },
+                            child:
+                                const Text('Cancel'),
                           ),
-                        );
-                      },
-                    ),
+
+                          TextButton(
+                            onPressed: () {
+                              widget.onDelete();
+
+                              Navigator.pop(context);
+
+                              Navigator.pop(context);
+                            },
+                            child:
+                                const Text('Delete'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildDetailSection(
+    String title,
+    String content,
+  ) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              content,
+              style: const TextStyle(
+                fontSize: 16,
+                height: 1.5,
+              ),
             ),
           ],
         ),
